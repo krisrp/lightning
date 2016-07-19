@@ -193,6 +193,7 @@ daemon-test-%:
 	NO_VALGRIND=$(NO_VALGRIND) daemon/test/test.sh --$*
 
 # These don't work in parallel, so chain the deps
+daemon-test-close-with-uncommitted: daemon-test-steal
 daemon-test-steal: daemon-test-dump-onchain
 daemon-test-dump-onchain: daemon-test-timeout-anchor
 daemon-test-timeout-anchor: daemon-test-different-fee-rates
@@ -201,7 +202,7 @@ daemon-test-normal: daemon-test-manual-commit
 daemon-test-manual-commit: daemon-test-mutual-close-with-htlcs
 daemon-test-mutual-close-with-htlcs: daemon-all
 
-daemon-tests: daemon-test-steal
+daemon-tests: daemon-test-close-with-uncommitted
 
 test-onion: test/test_onion test/onion_key
 	set -e; TMPF=/tmp/onion.$$$$; test/test_onion --generate $$(test/onion_key --pub `seq 20`) > $$TMPF; for k in `seq 20`; do test/test_onion --decode $$(test/onion_key --priv $$k) < $$TMPF > $$TMPF.unwrap; mv $$TMPF.unwrap $$TMPF; done; rm -f $$TMPF

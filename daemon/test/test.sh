@@ -56,6 +56,9 @@ while [ $# != 0 ]; do
 	x"--steal")
 	    STEAL=1
 	    ;;
+	x"--close-with-uncommitted")
+	    CLOSE_WITH_UNCOMMITTED=1
+	    ;;
 	x"--manual-commit")
 	    MANUALCOMMIT=1
 	    ;;
@@ -245,7 +248,7 @@ if [ -n "$MANUALCOMMIT" ]; then
     # Aka. never. 
     COMMIT_TIME=1h
 else
-    COMMIT_TIME=10ms
+    COMMIT_TIME=1s
 fi
 
 cat > $DIR1/config <<EOF
@@ -410,6 +413,7 @@ if [ -n "$DIFFERENT_FEES" ]; then
     [ ! -n "$MANUALCOMMIT" ] || lcli1 commit $ID2
     [ ! -n "$MANUALCOMMIT" ] || lcli2 commit $ID1
     check_status_single lcli2 0 0 "" $(($AMOUNT - $HTLC_AMOUNT - $ONE_HTLCS_FEE2)) $(($ONE_HTLCS_FEE2)) '{ "msatoshis" : '$HTLC_AMOUNT', "expiry" : { "block" : '$EXPIRY' }, "rhash" : "'$RHASH'" } '
+    check_status_single lcli1 $(($AMOUNT - $HTLC_AMOUNT - $ONE_HTLCS_FEE)) $(($ONE_HTLCS_FEE)) '{ "msatoshis" : '$HTLC_AMOUNT', "expiry" : { "block" : '$EXPIRY' }, "rhash" : "'$RHASH'" } ' 0 0 ""
     lcli2 fulfillhtlc $ID1 $SECRET
     [ ! -n "$MANUALCOMMIT" ] || lcli2 commit $ID1
     [ ! -n "$MANUALCOMMIT" ] || lcli1 commit $ID2
@@ -831,6 +835,10 @@ if [ ! -n "$MANUALCOMMIT" ]; then
     # starts.
     check lcli3 "getpeers | $FGREP \"\\\"our_amount\\\" : $(($HTLC_AMOUNT - $NO_HTLCS_FEE / 2))\""
     lcli3 close $ID2
+fi
+
+if [ -n "$CLOSE_WITH_UNCOMMITTED" ]; then
+    lcli1 newhtlc $ID2 $HTLC_AMOUNT $EXPIRY $RHASH3
 fi
 
 lcli1 close $ID2
