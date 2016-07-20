@@ -408,8 +408,45 @@ static bool clearing_pkt_in(struct peer *peer, const Pkt *pkt)
 	return true;
 }
 
+/* Returns true if nothing to commit, or commit sent. */
+static bool do_commit(struct peer *peer, struct command *jsoncmd)
+{
+	if (!state_can_commit(peer->state)) {
+		log_debug(peer->log, "do_commit: can't commit");
+		if (jsoncmd)
+			command_fail(jsoncmd, "peer in state %s",
+				     state_name(peer->state));
+		return false;
+	}
+
+	/* We can have changes we suggested, or changes they suggested. */
+	if (!peer_uncommitted_changes(peer)) {
+		log_debug(peer->log, "do_commit: no changes to commit");
+		if (jsoncmd)
+			command_fail(jsoncmd, "no changes to commit");
+		return true;
+	}
+
+	log_debug(peer->log, "do_commit: sending commit command");
+
+	assert(!peer->commit_jsoncmd);
+
+	peer->commit_jsoncmd = jsoncmd;
+	queue_pkt_commit(peer);
+	if (peer->state == STATE_CLEARING) {
+		set_peer_state(peer, STATE_CLEARING_COMMITTING, __func__);
+	} else {
+		assert(peer->state == STATE_NORMAL);
+		set_peer_state(peer, STATE_NORMAL_COMMITTING, __func__);
+	}
+	return true;
+}
+
 static void peer_start_clearing(struct peer *peer)
 {
+	/* We might have changes outstanding; if so, commit them now. */
+	do_commit(peer, NULL);
+
 	if (peer->state == STATE_NORMAL)
 		set_peer_state(peer, STATE_CLEARING, __func__);
 	else {
@@ -865,40 +902,6 @@ static void peer_disconnect(struct io_conn *conn, struct peer *peer)
 		set_peer_state(peer, STATE_ERR_BREAKDOWN, "peer_disconnect");
 		peer_breakdown(peer);
 	}
-}
-
-/* Returns true if nothing to commit, or commit sent. */
-static bool do_commit(struct peer *peer, struct command *jsoncmd)
-{
-	if (!state_can_commit(peer->state)) {
-		log_debug(peer->log, "do_commit: can't commit");
-		if (jsoncmd)
-			command_fail(jsoncmd, "peer in state %s",
-				     state_name(peer->state));
-		return false;
-	}
-
-	/* We can have changes we suggested, or changes they suggested. */
-	if (!peer_uncommitted_changes(peer)) {
-		log_debug(peer->log, "do_commit: no changes to commit");
-		if (jsoncmd)
-			command_fail(jsoncmd, "no changes to commit");
-		return true;
-	}
-
-	log_debug(peer->log, "do_commit: sending commit command");
-
-	assert(!peer->commit_jsoncmd);
-
-	peer->commit_jsoncmd = jsoncmd;
-	queue_pkt_commit(peer);
-	if (peer->state == STATE_CLEARING) {
-		set_peer_state(peer, STATE_CLEARING_COMMITTING, __func__);
-	} else {
-		assert(peer->state == STATE_NORMAL);
-		set_peer_state(peer, STATE_NORMAL_COMMITTING, __func__);
-	}
-	return true;
 }
 
 static void try_commit(struct peer *peer)
@@ -3226,9 +3229,6 @@ static void json_close(struct command *cmd,
 			     state_name(peer->state));
 		return;
 	}
-
-	/* We might have changes outstanding; if so, commit them now. */
-	do_commit(peer, NULL);
 
 	peer_start_clearing(peer);
 	command_success(cmd, null_response(cmd));
