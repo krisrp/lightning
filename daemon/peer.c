@@ -1290,11 +1290,12 @@ static bool fulfill_onchain(struct peer *peer, struct htlc *htlc)
 	for (i = 0; i < tal_count(ci->cstate->side[THEIRS].htlcs); i++) {
 		if (ci->cstate->side[THEIRS].htlcs[i] == htlc) {
 			/* Already irrevocably resolved? */
-			if (peer->closing_onchain.resolved[i])
+			assert(ci->map[i] != -1);
+			if (peer->closing_onchain.resolved[ci->map[i]])
 				return false;
-			peer->closing_onchain.resolved[i]
+			peer->closing_onchain.resolved[ci->map[i]]
 				= htlc_fulfill_tx(peer, ci, i);
-			broadcast_tx(peer, peer->closing_onchain.resolved[i]);
+			broadcast_tx(peer, peer->closing_onchain.resolved[ci->map[i]]);
 			return true;
 		}
 	}
@@ -2259,6 +2260,7 @@ static enum watch_result our_htlc_spent(struct peer *peer,
 	struct sha256 sha;
 	struct rval preimage;
 	size_t i = ptr2int(pi);
+	const struct commit_info *ci = peer->closing_onchain.ci;
 
 	/* It should be spending the HTLC we expect. */
 	assert(peer->closing_onchain.ci->map[i] == tx->input[input_num].index);
@@ -2304,7 +2306,8 @@ static enum watch_result our_htlc_spent(struct peer *peer,
 	 * the redemption transaction itself once we've extracted the
 	 * preimage; the knowledge is not revocable.
 	 */
-	peer->closing_onchain.resolved[i] = irrevocably_resolved(peer);
+	assert(ci->map[i] >= 0);
+	peer->closing_onchain.resolved[ci->map[i]] = irrevocably_resolved(peer);
 	return DELETE_WATCH;
 }
 
@@ -2336,6 +2339,7 @@ static enum watch_result our_htlc_depth(struct peer *peer,
 					bool our_commit,
 					size_t i)
 {
+	const struct commit_info *ci = peer->closing_onchain.ci;
 	struct htlc *h;
 	u32 height;
 
@@ -2369,14 +2373,15 @@ static enum watch_result our_htlc_depth(struct peer *peer,
 	 * MUST *resolve* the output by spending it.
 	 */
 	/* FIXME: we should simply delete this watch if HTLC is fulfilled. */
-	if (!peer->closing_onchain.resolved[i]) {
-		peer->closing_onchain.resolved[i]
+	assert(ci->map[i] >= 0);
+	if (!peer->closing_onchain.resolved[ci->map[i]]) {
+		peer->closing_onchain.resolved[ci->map[i]]
 			= htlc_timeout_tx(peer, peer->closing_onchain.ci, i);
-		watch_tx(peer->closing_onchain.resolved[i],
+		watch_tx(peer->closing_onchain.resolved[ci->map[i]],
 			 peer,
-			 peer->closing_onchain.resolved[i],
+			 peer->closing_onchain.resolved[ci->map[i]],
 			 our_htlc_timeout_depth, int2ptr(i));
-		broadcast_tx(peer, peer->closing_onchain.resolved[i]);
+		broadcast_tx(peer, peer->closing_onchain.resolved[ci->map[i]]);
 	}
 	return DELETE_WATCH;
 }
@@ -2409,11 +2414,9 @@ static void resolve_our_htlcs(struct peer *peer,
 
 	bitcoin_txid(tx, &txid);
 	for (i = start; i < start + num; i++) {
-		/* Doesn't exist?  Resolved by tx itself. */
-		if (ci->map[i] == -1) {
-			resolved[i] = tx;
+		/* Doesn't exist?  Ignore. */
+		if (ci->map[i] == -1)
 			continue;
-		}
 
 		/* BOLT #onchain:
 		 *
@@ -2441,6 +2444,7 @@ static enum watch_result their_htlc_depth(struct peer *peer,
 	u32 height;
 	struct htlc *h;
 	size_t i = ptr2int(pi);
+	const struct commit_info *ci = peer->closing_onchain.ci;
 
 	/* Must be in a block. */
 	if (depth == 0)
@@ -2458,7 +2462,7 @@ static enum watch_result their_htlc_depth(struct peer *peer,
 	if (height < abs_locktime_to_blocks(&h->expiry))
 		return KEEP_WATCHING;
 
-	peer->closing_onchain.resolved[i] = irrevocably_resolved(peer);
+	peer->closing_onchain.resolved[ci->map[i]] = irrevocably_resolved(peer);
 	return DELETE_WATCH;
 }
 
@@ -2473,11 +2477,9 @@ static void resolve_their_htlcs(struct peer *peer,
 	for (i = start; i < start + num; i++) {
 		struct htlc *htlc;
 
-		/* Doesn't exist?  Resolved by tx itself. */
-		if (ci->map[i] == -1) {
-			resolved[i] = tx;
+		/* Doesn't exist?  Ignore. */
+		if (ci->map[i] == -1)
 			continue;
-		}
 
 		/* BOLT #onchain:
 		 *
@@ -2488,9 +2490,9 @@ static void resolve_their_htlcs(struct peer *peer,
 		 */
 		htlc = htlc_by_index(ci, i);
 		if (htlc->r) {
-			peer->closing_onchain.resolved[i]
+			peer->closing_onchain.resolved[ci->map[i]]
 				= htlc_fulfill_tx(peer, ci, i);
-			broadcast_tx(peer, peer->closing_onchain.resolved[i]);
+			broadcast_tx(peer, peer->closing_onchain.resolved[ci->map[i]]);
 		} else {
 			/* BOLT #onchain:
 			 *
@@ -2507,11 +2509,13 @@ static enum watch_result our_main_output_depth(struct peer *peer,
 					       const struct sha256_double *txid,
 					       void *unused)
 {
+	const struct commit_info *ci = peer->closing_onchain.ci;
+
 	/* Not past CSV timeout? */
 	if (depth < rel_locktime_to_blocks(&peer->remote.locktime))
 		return KEEP_WATCHING;
 
-	assert(!peer->closing_onchain.resolved[0]);
+	assert(!peer->closing_onchain.resolved[ci->map[0]]);
 
 	/* BOLT #onchain:
 	 *
@@ -2522,8 +2526,8 @@ static enum watch_result our_main_output_depth(struct peer *peer,
 	 *    recommended), the output is *resolved* by the spending
 	 *    transaction
 	 */
-	peer->closing_onchain.resolved[0] = bitcoin_spend_ours(peer);
-	broadcast_tx(peer, peer->closing_onchain.resolved[0]);
+	peer->closing_onchain.resolved[ci->map[0]] = bitcoin_spend_ours(peer);
+	broadcast_tx(peer, peer->closing_onchain.resolved[ci->map[0]]);
 	return DELETE_WATCH;
 }
 
@@ -2566,7 +2570,7 @@ static void resolve_our_unilateral(struct peer *peer,
 	size_t num_ours, num_theirs;
 
 	peer->closing_onchain.resolved
-		= tal_arrz(tx, const struct bitcoin_tx *, tal_count(ci->map));
+		= tal_arrz(tx, const struct bitcoin_tx *, tx->output_count);
 
 	/* This only works because we always watch for a long time before
 	 * freeing peer, by which time this has resolved.  We could create
@@ -2581,14 +2585,16 @@ static void resolve_our_unilateral(struct peer *peer,
 	 *    other node's `open_channel` `delay` field) before spending the
 	 *    output.
 	 */
-	watch_tx(tx, peer, tx, our_main_output_depth, NULL);
+	if (ci->map[0] >= 0)
+		watch_tx(tx, peer, tx, our_main_output_depth, NULL);
 
 	/* BOLT #onchain:
 	 *
 	 * 2. _B's main output_: No action required, this output is considered
 	 *    *resolved* by the *commitment tx*.
 	 */
-	peer->closing_onchain.resolved[1] = tx;
+	if (ci->map[1] >= 0)
+		peer->closing_onchain.resolved[ci->map[1]] = tx;
 
 	num_ours = tal_count(ci->cstate->side[OURS].htlcs);
 	num_theirs = tal_count(ci->cstate->side[THEIRS].htlcs);
@@ -2633,7 +2639,7 @@ static void resolve_their_unilateral(struct peer *peer,
 
 	ci = peer->closing_onchain.ci;
 	peer->closing_onchain.resolved
-		= tal_arrz(tx, const struct bitcoin_tx *, tal_count(ci->map));
+		= tal_arrz(tx, const struct bitcoin_tx *, tx->output_count);
 
 	/* BOLT #onchain:
 	 *
@@ -2641,14 +2647,16 @@ static void resolve_their_unilateral(struct peer *peer,
 	 *    simple P2WPKH output.  This output is considered
 	 *    *resolved* by the *commitment tx*.
 	 */
-	peer->closing_onchain.resolved[1] = tx;
+	if (ci->map[1] >= 0)
+		peer->closing_onchain.resolved[ci->map[1]] = tx;
 
 	/* BOLT #onchain:
 	 *
 	 * 2. _B's main output_: No action required, this output is
 	 *    considered *resolved* by the *commitment tx*.
 	 */
-	peer->closing_onchain.resolved[0] = tx;
+	if (ci->map[0] >= 0)
+		peer->closing_onchain.resolved[ci->map[0]] = tx;
 
 	num_ours = tal_count(ci->cstate->side[OURS].htlcs);
 	num_theirs = tal_count(ci->cstate->side[THEIRS].htlcs);
