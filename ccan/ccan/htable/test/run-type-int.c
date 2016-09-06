@@ -18,7 +18,7 @@ struct obj {
 	unsigned int key;
 };
 
-static const unsigned int objkey(const struct obj *obj)
+static unsigned int objkey(const struct obj *obj)
 {
 	return obj->key;
 }
@@ -88,7 +88,7 @@ static void del_vals(struct htable_obj *ht,
 }
 
 static void del_vals_bykey(struct htable_obj *ht,
-			   const struct obj val[], unsigned int num)
+			   const struct obj val[] UNNEEDED, unsigned int num)
 {
 	unsigned int i;
 
@@ -112,7 +112,7 @@ static bool check_mask(struct htable *ht, const struct obj val[], unsigned num)
 	return true;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	unsigned int i;
 	struct htable_obj ht, ht2;
@@ -136,11 +136,11 @@ int main(int argc, char *argv[])
 	/* Fill it, it should increase in size. */
 	add_vals(&ht, val, NUM_VALS);
 	ok1(ht.raw.bits == NUM_BITS + 1);
-	ok1(ht.raw.max < (1 << ht.raw.bits));
+	ok1(ht.raw.max < (1U << ht.raw.bits));
 
 	/* Mask should be set. */
 	ok1(ht.raw.common_mask != 0);
-	ok1(ht.raw.common_mask != -1);
+	ok1(ht.raw.common_mask != -1U);
 	ok1(check_mask(&ht.raw, val, NUM_VALS));
 
 	/* Find all. */

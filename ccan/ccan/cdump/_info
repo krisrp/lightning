@@ -29,7 +29,8 @@
  * {
  * 	char *code, *problems;
  * 	struct cdump_definitions *defs;
- * 	int i, j;
+ * 	int i;
+ *	size_t j;
  *
  * 	// Read code from stdin.
  * 	code = grab_file(NULL, NULL);
@@ -84,6 +85,7 @@ int main(int argc, char *argv[])
 		return 1;
 
 	if (strcmp(argv[1], "depends") == 0) {
+		printf("ccan/compiler\n");
 		printf("ccan/tal\n");
 		printf("ccan/tal/str\n");
 		printf("ccan/strmap\n");
