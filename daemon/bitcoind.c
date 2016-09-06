@@ -93,7 +93,8 @@ static char *bcli_args(struct bitcoin_cli *bcli)
 	return ret;
 }
 	
-static void bcli_finished(struct io_conn *conn, struct bitcoin_cli *bcli)
+static void bcli_finished(struct io_conn *conn UNNEEDED,
+			  struct bitcoin_cli *bcli)
 {
 	int ret, status;
 	struct lightningd_state *dstate = bcli->dstate;

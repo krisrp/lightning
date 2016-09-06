@@ -95,7 +95,8 @@ struct wallet *wallet_can_spend(struct lightningd_state *dstate,
 }
 	
 static void json_newaddr(struct command *cmd,
-			 const char *buffer, const jsmntok_t *params)
+			 const char *buffer UNNEEDED,
+			 const jsmntok_t *params UNNEEDED)
 {
 	struct json_result *response = new_json_result(cmd);	
 	struct wallet *w = tal(cmd->dstate, struct wallet);

@@ -47,7 +47,8 @@ struct timeabs controlled_time(void)
 
 int main(int argc, char *argv[])
 {
-	int fd, i, off;
+	int fd, i;
+	size_t off;
 	const char *method;
 	char *cmd, *resp, *idstr, *rpc_filename;
 	char *result_end;

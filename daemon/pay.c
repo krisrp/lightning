@@ -274,7 +274,7 @@ static void json_getroute(struct command *cmd,
 	json_array_start(response, "route");
 	json_add_route(response, cmd->dstate->secpctx,
 		       peer->id, amounts[0], delays[0]);
-	for (i = 0; i < tal_count(route); i++)
+	for (i = 0; i < (int)tal_count(route); i++)
 		json_add_route(response, cmd->dstate->secpctx,
 			       &route[i]->dst->id, amounts[i+1], delays[i+1]);
 	json_array_end(response);

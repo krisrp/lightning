@@ -63,11 +63,13 @@ static void dump_tx(const char *msg,
 	}
 }
 #else
-static void dump_tx(const char *msg,
-		    const struct bitcoin_tx *tx, size_t inputnum,
-		    const u8 *script, size_t script_len,
-		    const struct pubkey *key,
-		    const struct sha256_double *h)
+static void dump_tx(const char *msg UNNEEDED,
+		    const struct bitcoin_tx *tx UNNEEDED,
+		    size_t inputnum UNNEEDED,
+		    const u8 *script UNNEEDED,
+		    size_t script_len UNNEEDED,
+		    const struct pubkey *key UNNEEDED,
+		    const struct sha256_double *h UNNEEDED)
 {
 }
 #endif

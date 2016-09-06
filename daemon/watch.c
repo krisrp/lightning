@@ -182,7 +182,7 @@ void txwatch_fire(struct lightningd_state *dstate,
 	}
 }
 
-void txowatch_fire(struct lightningd_state *dstate,
+void txowatch_fire(struct lightningd_state *dstate UNNEEDED,
 		   const struct txowatch *txow,
 		   const struct bitcoin_tx *tx,
 		   size_t input_num)

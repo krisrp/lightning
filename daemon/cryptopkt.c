@@ -126,7 +126,7 @@ static void *proto_tal_alloc(void *allocator_data, size_t size)
 	return tal_arr(allocator_data, char, size);
 }
 
-static void proto_tal_free(void *allocator_data, void *pointer)
+static void proto_tal_free(void *allocator_data UNNEEDED, void *pointer)
 {
 	tal_free(pointer);
 }

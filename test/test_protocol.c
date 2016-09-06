@@ -265,10 +265,10 @@ static void db_recv_local_commit(struct database *db,
 	db->local = *ci;
 }
 
-static void db_send_remote_commit(struct peer *peer,
+static void db_send_remote_commit(struct peer *peer UNNEEDED,
 				  struct database *db,
 				  const struct commit_info *ci,
-				  struct signature sig)
+				  struct signature sig UNNEEDED)
 {
 	if (ci->prev)
 		db->remote_prev = *ci->prev;
@@ -277,7 +277,7 @@ static void db_send_remote_commit(struct peer *peer,
 }
 
 static void db_send_local_revoke(struct database *db,
-				 const struct commit_info *ci)
+				 const struct commit_info *ci UNNEEDED)
 {
 	db->last_sent++;
 }
@@ -409,7 +409,7 @@ static void write_out(int fd, const void *p, size_t len)
 static void dump_htlcs(struct htlc **htlcs,
 		       const char *prefix,
 		       bool verbose,
-		       int flags_inc, int flags_exc)
+		       unsigned int flags_inc, unsigned int flags_exc)
 {
 	size_t i, n = tal_count(htlcs);
 	char *ctx = tal(htlcs, char);
@@ -1066,9 +1066,7 @@ static void add_sent(struct sent **sent, int y, const char *msg)
 	(*sent)[n].desc = tal_strdup(*sent, msg);
 }
 
-static void draw_restart(char **str, const char *name,
-			 struct sent **a_sent, struct sent **b_sent,
-			 int *y)
+static void draw_restart(char **str, const char *name, int *y)
 {
 	*y += STEP_HEIGHT / 2;
 	tal_append_fmt(str, "<line x1=\"%i\" y1=\"%i\" x2=\"%i\" y2=\"%i\" stroke=\"black\" stroke-width=\"1\"/>\n",
@@ -1217,7 +1215,7 @@ static void start_clients(int a_to_b[2],
 	close(a_to_b[1]);
 }
 
-static void do_nothing(int sig)
+static void do_nothing(int sig UNNEEDED)
 {
 }
 
@@ -1350,8 +1348,7 @@ int main(int argc, char *argv[])
 			char ack;
 
 			if (svg)
-				draw_restart(&svg, "RESTART",
-					     &a_sent, &b_sent, &y);
+				draw_restart(&svg, "RESTART", &y);
 
 			write_to_client("A", acmd[1], "save", strlen("save")+1);
 			write_to_client("B", bcmd[1], "save", strlen("save")+1);
@@ -1384,8 +1381,7 @@ int main(int argc, char *argv[])
 				   &a_sent, &b_sent, &y, &max_chars);
 
 			if (svg)
-				draw_restart(&svg, "RESTART END",
-					     &a_sent, &b_sent, &y);
+				draw_restart(&svg, "RESTART END", &y);
 			continue;
 		} else if (strstarts(cmd, "#") || streq(cmd, ""))
 			continue;

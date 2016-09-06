@@ -191,7 +191,7 @@ void remove_connection(struct lightningd_state *dstate,
 }
 
 /* Too big to reach, but don't overflow if added. */
-#define INFINITE 0x3FFFFFFFFFFFFFFFULL
+#define INFINITE ((s64)0x3FFFFFFFFFFFFFFFULL)
 
 static void clear_bfg(struct node_map *nodes)
 {
@@ -261,7 +261,7 @@ struct peer *find_route(struct lightningd_state *dstate,
 	struct node *n, *src, *dst;
 	struct node_map_iter it;
 	struct peer *first;
-	int runs, i, best;
+	unsigned int runs, i, best;
 
 	/* Note: we map backwards, since we know the amount of satoshi we want
 	 * at the end, and need to derive how much we need to send. */

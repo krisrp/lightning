@@ -56,9 +56,9 @@ struct log {
 };
 
 static void log_default_print(const char *prefix,
-			      enum log_level level,
+			      enum log_level level UNNEEDED,
 			      bool continued,
-			      const char *str, void *arg)
+			      const char *str, void *arg UNNEEDED)
 {
 	if (!continued) {
 		printf("%s %s\n", prefix, str);
@@ -394,7 +394,7 @@ void log_blob_(struct log *log, enum log_level level, const char *fmt,
 	va_end(ap);
 
 	hex = tal_hexstr(log, blob, len);
-	if (level == -1)
+	if ((int)level == -1)
 		log_add(log, fmt, hex);
 	else
 		log_(log, level, fmt, hex);
@@ -500,7 +500,7 @@ static char *arg_log_prefix(const char *arg, struct log *log)
 }
 
 static void log_to_file(const char *prefix,
-			enum log_level level,
+			enum log_level level UNNEEDED,
 			bool continued,
 			const char *str,
 			FILE *logf)

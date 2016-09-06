@@ -79,7 +79,7 @@ static void next_topology_timer(struct lightningd_state *dstate)
 		     start_poll_chaintip, dstate);
 }
 
-static int cmp_times(const u32 *a, const u32 *b, void *unused)
+static int cmp_times(const u32 *a, const u32 *b, void *unused UNNEEDED)
 {
 	if (*a > *b)
 		return -1;
@@ -89,7 +89,7 @@ static int cmp_times(const u32 *a, const u32 *b, void *unused)
 }
 
 /* Mediantime is median of this and previous 10 blocks. */
-static u32 get_mediantime(const struct topology *topo, const struct block *b)
+static u32 get_mediantime(const struct block *b)
 {
 	unsigned int i;
 	u32 times[11];
@@ -144,7 +144,7 @@ static void connect_block(struct lightningd_state *dstate,
 
 	b->prev = prev;
 	b->height = b->prev->height + 1;
-	b->mediantime = get_mediantime(topo, b);
+	b->mediantime = get_mediantime(b);
 
 	block_map_add(&topo->block_map, b);
 	
@@ -394,7 +394,7 @@ static void gather_blocks(struct lightningd_state *dstate,
 
 static void check_chaintip(struct lightningd_state *dstate,
 			   const struct sha256_double *tipid,
-			   void *arg)
+			   void *arg UNNEEDED)
 {
 	struct topology *topo = dstate->topology;
 
@@ -440,7 +440,7 @@ static void get_init_block(struct lightningd_state *dstate,
 }
 
 static void get_init_blockhash(struct lightningd_state *dstate, u32 blockcount,
-			       void *unused)
+			       void *unused UNNEEDED)
 {
 	u32 start;
 	struct peer *peer;

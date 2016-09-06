@@ -82,7 +82,7 @@ static struct io_plan *connected(struct io_conn *conn, struct dns_async *d)
 static void try_connect_one(struct dns_async *d);
 
 /* If this connection failed, try connecting to another address. */
-static void connect_failed(struct io_conn *conn, struct dns_async *d)
+static void connect_failed(struct io_conn *conn UNNEEDED, struct dns_async *d)
 {
 	try_connect_one(d);
 }
@@ -162,7 +162,7 @@ static struct io_plan *init_dns_conn(struct io_conn *conn, struct dns_async *d)
 		       read_addresses, d);
 }
 
-static void reap_child(struct io_conn *conn, struct dns_async *d)
+static void reap_child(struct io_conn *conn UNNEEDED, struct dns_async *d)
 {
 	waitpid(d->pid, NULL, 0);
 	/* Last user calls fail. */

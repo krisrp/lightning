@@ -24,7 +24,8 @@ struct json_output {
 	const char *json;
 };
 
-static void finish_jcon(struct io_conn *conn, struct json_connection *jcon)
+static void finish_jcon(struct io_conn *conn UNNEEDED,
+			struct json_connection *jcon)
 {
 	log_debug(jcon->log, "Closing (%s)", strerror(errno));
 	if (jcon->current) {
@@ -44,7 +45,8 @@ static const struct json_command help_command = {
 };
 
 static void json_stop(struct command *cmd,
-		      const char *buffer, const jsmntok_t *params)
+		      const char *buffer UNNEEDED,
+		      const jsmntok_t *params UNNEEDED)
 {
 	struct json_result *response = new_json_result(cmd);
 
@@ -211,8 +213,9 @@ static const struct json_command dev_rhash_command = {
 	"Returns a hash value"
 };
 
-static void json_crash(struct command *cmd,
-		       const char *buffer, const jsmntok_t *params)
+static void json_crash(struct command *cmd UNNEEDED,
+		       const char *buffer UNNEEDED,
+		       const jsmntok_t *params UNNEEDED)
 {
 	fatal("Crash at user request");
 }
@@ -289,7 +292,8 @@ static const struct json_command *cmdlist[] = {
 };
 
 static void json_help(struct command *cmd,
-		      const char *buffer, const jsmntok_t *params)
+		      const char *buffer UNNEEDED,
+		      const jsmntok_t *params UNNEEDED)
 {
 	unsigned int i;
 	struct json_result *response = new_json_result(cmd);

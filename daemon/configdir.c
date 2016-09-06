@@ -79,7 +79,7 @@ void opt_parse_from_config(const tal_t *ctx)
 	argv = tal_arr(ctx, char *, argc = 1);
 	argv[0] = "lightning config file";
 
-	for (i = 0; i < tal_count(lines) - 1; i++) {
+	for (i = 0; i < (int)tal_count(lines) - 1; i++) {
 		if (strstarts(lines[i], "#"))
 			continue;
 		/* Only valid forms are "foo" and "foo=bar" */

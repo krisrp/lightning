@@ -102,7 +102,7 @@ static void flip_key(struct seckey *seckey)
 	int i;
 	bool carry = 0;
 
-	const int64_t group[] = {
+	const uint64_t group[] = {
 		0xFFFFFFFFFFFFFFFFULL,
 		0xFFFFFFFFFFFFFFFEULL,
 		0xBAAEDCE6AF48A03BULL,
@@ -334,7 +334,7 @@ static bool check_hmac(struct onion *onion, const struct hmackey *hmackey)
 
 static bool create_onion(const secp256k1_pubkey pubkey[],
 			 char *const msg[],
-			 size_t num,
+			 int num,
 			 struct onion *onion)
 {
 	int i;
@@ -589,7 +589,7 @@ int main(int argc, char *argv[])
 	if (generate) {
 		secp256k1_pubkey pubkeys[MAX_HOPS];
 		char *msgs[MAX_HOPS];
-		size_t i;
+		int i;
 
 		if (argc == 1)
 			opt_usage_exit_fail("Expected at least one pubkey");

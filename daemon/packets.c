@@ -364,7 +364,8 @@ Pkt *accept_pkt_open_commit_sig(struct peer *peer, const Pkt *pkt,
 	return NULL;
 }
 
-Pkt *accept_pkt_open_complete(struct peer *peer, const Pkt *pkt)
+Pkt *accept_pkt_open_complete(struct peer *peer UNNEEDED,
+			      const Pkt *pkt UNNEEDED)
 {
 	return NULL;
 }
@@ -483,7 +484,9 @@ Pkt *accept_pkt_htlc_fulfill(struct peer *peer, const Pkt *pkt, struct htlc **h,
 	return NULL;
 }
 
-Pkt *accept_pkt_update_fee(struct peer *peer, const Pkt *pkt, u64 *feerate)
+/* FIXME: Don't accept ludicrous fee */
+Pkt *accept_pkt_update_fee(struct peer *peer UNNEEDED,
+			   const Pkt *pkt, u64 *feerate)
 {
 	const UpdateFee *f = pkt->update_fee;
 

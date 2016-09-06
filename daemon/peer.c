@@ -2077,7 +2077,7 @@ static void destroy_peer(struct peer *peer)
 
 static void try_reconnect(struct peer *peer);
 
-static void peer_disconnect(struct io_conn *conn, struct peer *peer)
+static void peer_disconnect(struct io_conn *conn UNNEEDED, struct peer *peer)
 {
 	log_info(peer->log, "Disconnected");
 
@@ -2538,12 +2538,13 @@ static struct io_plan *read_reconnect_pkt(struct io_conn *conn,
 	return peer_read_packet(conn, peer, reconnect_pkt_in);
 }
 
-static struct io_plan *crypto_on_reconnect(struct io_conn *conn,
-					   struct lightningd_state *dstate,
-					   struct io_data *iod,
-					   const struct pubkey *id,
-					   struct peer *peer,
-					   bool we_connected)
+static struct io_plan *
+crypto_on_reconnect(struct io_conn *conn,
+		    struct lightningd_state *dstate UNNEEDED,
+		    struct io_data *iod,
+		    const struct pubkey *id,
+		    struct peer *peer,
+		    bool we_connected)
 {
 	u64 sigs, revokes, shutdown, closing;
 
@@ -2649,7 +2650,7 @@ static struct io_plan *crypto_on_in(struct io_conn *conn,
 				    struct io_data *iod,
 				    struct log *log,
 				    const struct pubkey *id,
-				    void *unused)
+				    void *unused UNNEEDED)
 {
 	struct peer *peer;
 
@@ -2802,7 +2803,7 @@ void setup_listeners(struct lightningd_state *dstate, unsigned int portnum)
 		fatal("Could not bind to a network address");
 }
 
-static void peer_failed(struct lightningd_state *dstate,
+static void peer_failed(struct lightningd_state *dstate UNNEEDED,
 			struct json_connecting *connect)
 {
 	/* FIXME: Better diagnostics! */
@@ -2816,7 +2817,7 @@ static void json_connect(struct command *cmd,
 	struct json_connecting *connect;
 	jsmntok_t *host, *port, *txtok;
 	struct bitcoin_tx *tx;
-	int output;
+	unsigned int output;
 	size_t txhexlen;
 
 	if (!json_get_params(buffer, params,
@@ -2952,8 +2953,9 @@ static void check_htlc_expiry(struct peer *peer)
 
 static enum watch_result anchor_depthchange(struct peer *peer,
 					    unsigned int depth,
-					    const struct sha256_double *txid,
-					    void *unused)
+					    const struct sha256_double *txid
+						UNNEEDED,
+					    void *unused UNNEEDED)
 {
 	/* Still waiting for it to reach depth? */
 	if (state_is_opening(peer->state)) {
@@ -3188,7 +3190,8 @@ static void fail_own_htlc(struct peer *peer, struct htlc *htlc)
  */
 static enum watch_result our_htlc_timeout_depth(struct peer *peer,
 						unsigned int depth,
-						const struct sha256_double *txid,
+						const struct sha256_double *txid
+							UNNEEDED,
 						struct htlc *htlc)
 {
 	if (depth == 0)
@@ -3201,7 +3204,8 @@ static enum watch_result our_htlc_timeout_depth(struct peer *peer,
 
 static enum watch_result our_htlc_depth(struct peer *peer,
 					unsigned int depth,
-					const struct sha256_double *txid,
+					const struct sha256_double *txid
+						UNNEEDED,
 					enum side whose_commit,
 					unsigned int out_num)
 {
@@ -3265,7 +3269,8 @@ static enum watch_result our_htlc_depth_ourcommit(struct peer *peer,
 
 static enum watch_result their_htlc_depth(struct peer *peer,
 					  unsigned int depth,
-					  const struct sha256_double *txid,
+					  const struct sha256_double *txid
+						UNNEEDED,
 					  ptrint_t *out_num)
 {
 	u32 height;
@@ -3291,8 +3296,9 @@ static enum watch_result their_htlc_depth(struct peer *peer,
 
 static enum watch_result our_main_output_depth(struct peer *peer,
 					       unsigned int depth,
-					       const struct sha256_double *txid,
-					       void *unused)
+					       const struct sha256_double *txid
+							UNNEEDED,
+					       void *unused UNNEEDED)
 {
 	/* Not past CSV timeout? */
 	if (depth < rel_locktime_to_blocks(&peer->remote.locktime))
@@ -3319,8 +3325,9 @@ static enum watch_result our_main_output_depth(struct peer *peer,
  * we can't fail until we're sure our commitment tx will win. */
 static enum watch_result our_unilateral_depth(struct peer *peer,
 					      unsigned int depth,
-					      const struct sha256_double *txid,
-					      void *unused)
+					      const struct sha256_double *txid
+						UNNEEDED,
+					      void *unused UNNEEDED)
 {
 	struct htlc_map_iter it;
 	struct htlc *h;
@@ -3462,7 +3469,7 @@ static void resolve_our_unilateral(struct peer *peer)
 		 *    by the other node's `open_channel` `delay` field) before
 		 *    spending the output.
 		 */
-		if (i == peer->onchain.to_us_idx)
+		if ((int)i == peer->onchain.to_us_idx)
 			watch_tx(tx, peer, tx, our_main_output_depth, NULL);
 
 		/* BOLT #onchain:
@@ -3470,7 +3477,7 @@ static void resolve_our_unilateral(struct peer *peer)
 		 * 2. _B's main output_: No action required, this output is
 		 *    considered *resolved* by the *commitment tx*.
 		 */
-		else if (i == peer->onchain.to_them_idx)
+		else if ((int)i == peer->onchain.to_them_idx)
 			peer->onchain.resolved[i] = tx;
 
 		/* BOLT #onchain:
@@ -3507,14 +3514,14 @@ static void resolve_their_unilateral(struct peer *peer)
 		 *    simple P2WPKH output.  This output is considered
 		 *    *resolved* by the *commitment tx*.
 		 */
-		if (i == peer->onchain.to_us_idx)
+		if ((int)i == peer->onchain.to_us_idx)
 			peer->onchain.resolved[i] = tx;
 		/* BOLT #onchain:
 		 *
 		 * 2. _B's main output_: No action required, this output is
 		 *    considered *resolved* by the *commitment tx*.
 		 */
-		else if (i == peer->onchain.to_them_idx)
+		else if ((int)i == peer->onchain.to_them_idx)
 			peer->onchain.resolved[i] = tx;
 		/* BOLT #onchain:
 		 *
@@ -3554,8 +3561,9 @@ static void resolve_mutual_close(struct peer *peer)
 /* Called every time the tx spending the funding tx changes depth. */
 static enum watch_result check_for_resolution(struct peer *peer,
 					      unsigned int depth,
-					      const struct sha256_double *txid,
-					      void *unused)
+					      const struct sha256_double *txid
+						UNNEEDED,
+					      void *unused UNNEEDED)
 {
 	size_t i, n = tal_count(peer->onchain.resolved);
 	size_t forever = peer->dstate->config.forever_confirms;
@@ -3626,7 +3634,7 @@ static bool find_their_old_tx(struct peer *peer,
 static void resolve_their_steal(struct peer *peer,
 				const struct sha256 *revocation_preimage)
 {
-	int i, n;
+	unsigned int i, n;
 	const struct bitcoin_tx *tx = peer->onchain.tx;
 	struct bitcoin_tx *steal_tx;
 	size_t wsize = 0;
@@ -3646,7 +3654,7 @@ static void resolve_their_steal(struct peer *peer,
 		 *    simple P2WPKH output.  This output is considered
 		 *    *resolved* by the *commitment tx*.
 		 */
-		if (i == peer->onchain.to_us_idx) {
+		if ((int)i == peer->onchain.to_us_idx) {
 			log_debug(peer->log, "%i is to-us, ignoring", i);
 			peer->onchain.resolved[i] = tx;
 			continue;
@@ -3747,7 +3755,7 @@ static struct sha256 *get_rhash(struct peer *peer, u64 commit_num,
 static enum watch_result anchor_spent(struct peer *peer,
 				      const struct bitcoin_tx *tx,
 				      size_t input_num,
-				      void *unused)
+				      void *unused UNNEEDED)
 {
 	Pkt *err;
 	enum state newstate;
@@ -3940,7 +3948,7 @@ struct bitcoin_tx *peer_create_close_tx(struct peer *peer, u64 fee)
 	log_add_struct(peer->log, "%s", struct pubkey, &peer->local.finalkey);
 	log_add_struct(peer->log, "/%s", struct pubkey, &peer->remote.finalkey);
 
- 	return create_close_tx(peer->dstate->secpctx, peer,
+ 	return create_close_tx(peer,
 			       peer->closing.our_script,
 			       peer->closing.their_script,
 			       &peer->anchor.txid,
@@ -3996,7 +4004,8 @@ void bitcoin_create_anchor(struct peer *peer)
 
 /* We didn't end up broadcasting the anchor: we don't need to do anything
  * to "release" TXOs, since we have our own internal wallet now. */
-void bitcoin_release_anchor(struct peer *peer, enum state_input done)
+void bitcoin_release_anchor(struct peer *peer UNNEEDED,
+			    enum state_input done UNNEEDED)
 {
 }
 
@@ -4076,7 +4085,7 @@ static struct io_plan *peer_reconnect(struct io_conn *conn, struct peer *peer)
 
 /* We can't only retry when we want to send: they may want to send us
  * something but not be able to connect (NAT).  So keep retrying.. */ 
-static void reconnect_failed(struct io_conn *conn, struct peer *peer)
+static void reconnect_failed(struct io_conn *conn UNNEEDED, struct peer *peer)
 {
 	/* Already otherwise connected (ie. they connected in)? */
 	if (peer->conn) {
@@ -4185,7 +4194,8 @@ static void json_add_htlcs(struct json_result *response,
 
 /* FIXME: Somehow we should show running DNS lookups! */
 static void json_getpeers(struct command *cmd,
-			  const char *buffer, const jsmntok_t *params)
+			  const char *buffer UNNEEDED,
+			  const jsmntok_t *params UNNEEDED)
 {
 	struct peer *p;
 	struct json_result *response = new_json_result(cmd);	

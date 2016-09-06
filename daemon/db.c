@@ -127,7 +127,7 @@ static char *sql_hex_or_null(const tal_t *ctx, const void *buf, size_t len)
 
 static void from_sql_blob(sqlite3_stmt *stmt, int idx, void *p, size_t n)
 {
-	if (sqlite3_column_bytes(stmt, idx) != n)
+	if (sqlite3_column_bytes(stmt, idx) != (int)n)
 		fatal("db:wrong bytes %i not %zu",
 		      sqlite3_column_bytes(stmt, idx), n);
 	memcpy(p, sqlite3_column_blob(stmt, idx), n);

@@ -36,7 +36,7 @@ bool json_tok_streq(const char *buffer, const jsmntok_t *tok, const char *str)
 {
 	if (tok->type != JSMN_STRING)
 		return false;
-	if (tok->end - tok->start != strlen(str))
+	if (tok->end - tok->start != (int)strlen(str))
 		return false;
 	return strncmp(buffer + tok->start, str, tok->end - tok->start) == 0;
 }
@@ -146,7 +146,7 @@ const jsmntok_t *json_next(const jsmntok_t *tok)
 	const jsmntok_t *t;
 	size_t i;
 
-	for (t = tok + 1, i = 0; i < tok->size; i++)
+	for (t = tok + 1, i = 0; i < (size_t)tok->size; i++)
 		t = json_next(t);
 
 	return t;
