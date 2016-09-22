@@ -227,7 +227,7 @@ check()
 	fi
 	sleep 1
 	i=$(($i + 1))
-	if [ $i = 20 ]; then
+	if [ $i = 30 ]; then
 	    return 1
 	fi
     done
