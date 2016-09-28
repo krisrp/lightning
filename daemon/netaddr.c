@@ -1,4 +1,5 @@
 #include "bitcoin/pullpush.h"
+#include "jsonrpc.h"
 #include "netaddr.h"
 #include "utils.h"
 #include <arpa/inet.h>
@@ -22,6 +23,46 @@ void netaddr_to_addrinfo(struct addrinfo *ai, const struct netaddr *a)
 	ai->ai_addr = cast_const(struct sockaddr *, &a->saddr.s);
 	ai->ai_canonname = NULL;
 	ai->ai_next = NULL;
+}
+
+void json_add_netaddr(struct json_result *result,
+		      const char *fieldname,
+		      const struct netaddr *a)
+{
+	char name[INET6_ADDRSTRLEN];
+	const void *sockaddr;
+	uint16_t port;
+
+	json_object_start(result, fieldname);
+
+	switch (a->saddr.s.sa_family) {
+	case AF_INET:
+		json_object_start(result, "IPv4");
+		sockaddr = &a->saddr.ipv4.sin_addr;
+		port = ntohs(a->saddr.ipv4.sin_port);
+		break;
+	case AF_INET6:
+		json_object_start(result, "IPv6");
+		sockaddr = &a->saddr.ipv6.sin6_addr;
+		port = ntohs(a->saddr.ipv6.sin6_port);
+		break;
+	default:
+		json_object_start(result,
+				  tal_fmt(result, "Unknown protocol %u",
+					  a->saddr.s.sa_family));
+		json_object_end(result);
+		json_object_end(result);
+		return;
+	}
+
+	if (!inet_ntop(a->saddr.s.sa_family, sockaddr, name, sizeof(name)))
+		json_add_string(result, "host", "UNPRINTABLE");
+	else
+		json_add_string(result, "host", name);
+
+	json_add_num(result, "port", port);
+	json_object_end(result);
+	json_object_end(result);
 }
 
 char *netaddr_name(const tal_t *ctx, const struct netaddr *a)

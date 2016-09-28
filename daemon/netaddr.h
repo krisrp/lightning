@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 
 struct addrinfo;
+struct json_result;
 
 /* This can be extended to support other protocols in future. */
 struct netaddr {
@@ -31,4 +32,7 @@ bool netaddr_from_fd(int fd, int type, int protocol, struct netaddr *a);
 bool netaddr_from_blob(const void *linear, size_t len, struct netaddr *a);
 char *netaddr_to_hex(const tal_t *ctx, const struct netaddr *a);
 
+void json_add_netaddr(struct json_result *result,
+		      const char *fieldname,
+		      const struct netaddr *a);
 #endif /* LIGHTNING_DAEMON_NETADDR_H */

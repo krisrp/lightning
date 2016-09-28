@@ -295,6 +295,7 @@ static const struct json_command *cmdlist[] = {
 	&getroute_command,
 	&sendpay_command,
 	&getinfo_command,
+	&listaddresses_command,
 	/* Developer/debugging options. */
 	&dev_newhtlc_command,
 	&dev_fulfillhtlc_command,

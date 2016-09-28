@@ -2933,6 +2933,34 @@ const struct json_command connect_command = {
 	"Returns the {id} on success (once channel established)"
 };
 
+/* FIXME: Delete old or failed addresses. */
+static void json_listaddresses(struct command *cmd,
+			       const char *buffer, const jsmntok_t *params)
+{
+	struct peer_address *i;
+	struct json_result *response = new_json_result(cmd);	
+
+	json_object_start(response, NULL);
+	json_array_start(response, "addresses");
+	list_for_each(&cmd->dstate->addresses, i, list) {
+		json_object_start(response, NULL);
+		json_add_pubkey(response, cmd->dstate->secpctx, "id", &i->id);
+		json_add_netaddr(response, "address", &i->addr);
+	}
+	json_array_end(response);
+	json_object_end(response);
+
+	command_success(cmd, response);
+}
+
+const struct json_command listaddresses_command = {
+	"listaddresses",
+	json_listaddresses,
+	"Return all known peer internet addresses",
+	"Returns an {addresses} array of {host} {port} {id}"
+};
+
+
 /* Have any of our HTLCs passed their deadline? */
 static bool any_deadline_past(struct peer *peer)
 {
