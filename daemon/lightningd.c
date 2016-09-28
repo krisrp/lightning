@@ -408,6 +408,8 @@ static void opt_parse_from_config(struct lightningd_state *dstate)
 		if (errno != ENOENT)
 			fatal("Opening and reading config: %s",
 			      strerror(errno));
+		/* Now we can set up defaults, since no config file. */
+		setup_default_config(dstate);
 		return;
 	}
 
@@ -429,6 +431,7 @@ static void opt_parse_from_config(struct lightningd_state *dstate)
 	argv[argc] = NULL;
 
 	opt_early_parse(argc, argv, config_log_stderr_exit);
+	/* Now we can set up defaults, depending on whether testnet or not */
 	setup_default_config(dstate);
 
 	opt_parse(&argc, argv, config_log_stderr_exit);
