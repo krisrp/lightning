@@ -221,7 +221,7 @@ check()
     while ! eval "$@"; do
 	# Try making time pass for the nodes (if on mocktime), then sleeping.
 	if [ -n "$MOCKTIME" ]; then 
-	    MOCKTIME=$(($MOCKTIME + 1))
+	    MOCKTIME=$(($MOCKTIME + 5))
 	    lcli1 dev-mocktime $MOCKTIME
 	    lcli2 dev-mocktime $MOCKTIME
 	fi
@@ -367,7 +367,7 @@ cat > $DIR1/config <<EOF
 disable-irc
 log-level=debug
 bitcoind-regtest
-bitcoind-poll=1s
+bitcoind-poll=5s
 deadline-blocks=5
 min-htlc-expiry=6
 bitcoin-datadir=$DATADIR
@@ -379,7 +379,7 @@ cat > $DIR2/config <<EOF
 disable-irc
 bitcoind-regtest
 log-level=debug
-bitcoind-poll=1s
+bitcoind-poll=5s
 deadline-blocks=5
 min-htlc-expiry=6
 bitcoin-datadir=$DATADIR
